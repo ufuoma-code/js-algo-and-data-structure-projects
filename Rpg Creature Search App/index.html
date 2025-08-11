@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RPG Creature Search App (Fixed)</title>
+</head>
+<body>
+
+  <label for="search-input">Search creature by name or ID:</label>
+  <input id="search-input" type="text" required />
+  <button id="search-button">Search</button>
+
+  <hr />
+
+  <div id="creature-name"></div>
+  <div id="creature-id"></div>
+  <div id="weight"></div>
+  <div id="height"></div>
+  <div id="types"></div>
+
+  <div id="hp"></div>
+  <div id="attack"></div>
+  <div id="defense"></div>
+  <div id="special-attack"></div>
+  <div id="special-defense"></div>
+  <div id="speed"></div>
+
+<script>
+(() => {
+  const API_BASE = 'https://rpg-creature-api.freecodecamp.rocks/api/creature/';
+
+  // DOM elements (use distinct names to avoid collisions)
+  const inputEl = document.getElementById('search-input');
+  const buttonEl = document.getElementById('search-button');
+
+  const nameEl = document.getElementById('creature-name');
+  const idEl = document.getElementById('creature-id');
+  const weightEl = document.getElementById('weight');
+  const heightEl = document.getElementById('height');
+  const typesEl = document.getElementById('types');
+
+  const hpEl = document.getElementById('hp');
+  const attackEl = document.getElementById('attack');
+  const defenseEl = document.getElementById('defense');
+  const specialAttackEl = document.getElementById('special-attack');
+  const specialDefenseEl = document.getElementById('special-defense');
+  const speedEl = document.getElementById('speed');
+
+  buttonEl.addEventListener('click', () => {
+    const raw = inputEl.value.trim();
+    if (!raw) return;
+
+    clearAll();
+
+    // If input is pure digits, treat as ID, otherwise lowercase the name
+    const query = (/^\d+$/).test(raw) ? raw : raw.toLowerCase();
+
+    // Build the correct endpoint (note: /api/creature/{name-or-id})
+    const url = API_BASE + encodeURIComponent(query);
+
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('Creature not found');
+        return res.json();
+      })
+      .then(data => {
+        populateUI(data);
+      })
+      .catch(() => {
+        alert('Creature not found');
+      });
+  });
+
+  function clearAll() {
+    // clear text content; types is innerHTML cleared
+    nameEl.textContent = '';
+    idEl.textContent = '';
+    weightEl.textContent = '';
+    heightEl.textContent = '';
+    typesEl.innerHTML = '';
+    hpEl.textContent = '';
+    attackEl.textContent = '';
+    defenseEl.textContent = '';
+    specialAttackEl.textContent = '';
+    specialDefenseEl.textContent = '';
+    speedEl.textContent = '';
+  }
+
+  function populateUI(data) {
+    // Defensive parsing: data may contain types as array of objects {name: 'fire'}
+    nameEl.textContent = (data.name || '').toString().toUpperCase();
+
+    // tests accept "#1" or "1" — putting "#id" is valid per spec
+    idEl.textContent = '#' + (data.id ?? '');
+
+    // Weight / Height with prefixes per the user stories
+    weightEl.textContent = 'Weight: ' + (data.weight ?? '');
+    heightEl.textContent = 'Height: ' + (data.height ?? '');
+
+    // Types: clear then append one element per type, uppercase text
+    typesEl.innerHTML = '';
+    if (Array.isArray(data.types)) {
+      data.types.forEach(t => {
+        // t may be an object {name: 'fire'} or a string
+        const typeName = typeof t === 'string' ? t : (t && (t.name || t.type) ? (t.name || t.type) : '');
+        if (typeName) {
+          const sp = document.createElement('span');
+          sp.textContent = typeName.toString().toUpperCase();
+          typesEl.appendChild(sp);
+        }
+      });
+    }
+
+    // Stats: API uses stats array with objects like { name: 'hp', base_stat: 65 }
+    if (Array.isArray(data.stats)) {
+      data.stats.forEach(statObj => {
+        const key = (statObj.name || '').toLowerCase();
+        // prefer base_stat, fall back to value or other possible keys
+        const val = statObj.base_stat ?? statObj.value ?? statObj.baseStat ?? statObj.stat ?? '';
+        if (key === 'hp') hpEl.textContent = val;
+        else if (key === 'attack') attackEl.textContent = val;
+        else if (key === 'defense') defenseEl.textContent = val;
+        else if (key === 'special-attack') specialAttackEl.textContent = val;
+        else if (key === 'special-defense') specialDefenseEl.textContent = val;
+        else if (key === 'speed') speedEl.textContent = val;
+      });
+    } else {
+      // Some responses may include stats at top-level (fallback)
+      if ('hp' in data) hpEl.textContent = data.hp;
+      if ('attack' in data) attackEl.textContent = data.attack;
+      if ('defense' in data) defenseEl.textContent = data.defense;
+      if ('specialAttack' in data) specialAttackEl.textContent = data.specialAttack;
+      if ('specialDefense' in data) specialDefenseEl.textContent = data.specialDefense;
+      if ('speed' in data) speedEl.textContent = data.speed;
+    }
+  }
+})();
+</script>
+</body>
+</html>
