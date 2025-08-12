@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>US Telephone Number Validator</title>
+</head>
+<body>
+  <input id="user-input" type="text" placeholder="Enter phone number" />
+  <button id="check-btn">Check</button>
+  <button id="clear-btn">Clear</button>
+  <p id="results-div"></p>
+
+  <script>
+    function isValidPhoneNumber(str) {
+      // Valid formats regex
+      const validPattern = /^(1\s?)?(\(\d{3}\)|\d{3})([\s-]?)\d{3}([\s-]?)\d{4}$/;
+      return validPattern.test(str);
+    }
+
+    const checkBtn = document.getElementById("check-btn");
+    const clearBtn = document.getElementById("clear-btn");
+    const userInput = document.getElementById("user-input");
+    const resultDiv = document.getElementById("results-div");
+
+    checkBtn.addEventListener("click", () => {
+      const inputVal = userInput.value.trim();
+
+      if (inputVal === "") {
+        alert("Please provide a phone number");
+        return;
+      }
+
+      const isValid = isValidPhoneNumber(inputVal);
+      resultDiv.textContent = isValid
+        ? `Valid US number: ${inputVal}`
+        : `Invalid US number: ${inputVal}`;
+    });
+
+    clearBtn.addEventListener("click", () => {
+      resultDiv.textContent = "";
+    });
+  </script>
+</body>
+</html>
+
